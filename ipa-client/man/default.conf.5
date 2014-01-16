@@ -178,6 +178,9 @@ Used internally in the IPA source package to verify that the API has not changed
 .B verbose <boolean>
 When True provides more information. Specifically this sets the global log level to "info".
 .TP
+.B wait_for_dns <boolean>
+Controls whether IPA commands dnsrecord\-{add,mod,del} work synchronously or not. If set to True, the commands will not return until DNS server returns up\-to\-date answer to query for modified records. Normal resolver configured in /etc/resolv.conf on the IPA server is used. Do not enable this in production, it could cause problems if resolver on IPA server uses a caching server instead of local authoritative server. The default is False.
+.TP
 .B xmlrpc_uri <URI>
 Specifies the URI of the XML\-RPC server for a client. This may be used by IPA, and is used by some external tools, such as ipa\-getcert. Example: https://ipa.example.com/ipa/xml
 .TP

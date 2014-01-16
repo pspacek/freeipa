@@ -24,6 +24,7 @@ import netaddr
 import time
 import re
 import dns.name
+import dns.resolver
 
 from ipalib.request import context
 from ipalib import api, errors, output
@@ -2352,6 +2353,69 @@ class dnsrecord(LDAPObject):
                                   'NS record except when located in a zone root '
                                   'record (RFC 6672, section 2.3)'))
 
+    def wait_for_modified_attrs(self, entry_attrs, dns_name):
+        '''Wait until DNS resolver returns up-to-date answer for modified entry.
+
+        :param entry_attrs:
+            None if the entry was deleted from LDAP or
+            LDAPEntry instance containing at least all modified attributes.
+        :param dns_name: FQDN as dns.name.Name instance or string
+        '''
+        record_attr_suf = 'record'
+
+        # represent data in LDAP as dictionary rdtype => rrset
+        ldap_rrsets = {}
+        if entry_attrs:
+            for attr in entry_attrs.iterkeys():
+                if not attr.endswith(record_attr_suf):
+                    continue
+
+                rdtype = dns.rdatatype.from_text(attr[0:-len(record_attr_suf)])
+                if entry_attrs[attr]:
+                    try:
+                        # TTL here can be arbitrary value because it is ignored
+                        # during comparison
+                        ldap_rrset = dns.rrset.from_text(
+                            dns_name, 86400, dns.rdataclass.IN, rdtype,
+                            *map(str, entry_attrs[attr]))
+                    except dns.exception.SyntaxError as e:
+                        self.log.error(
+                            'DNS syntax error: %s %s %s: %s' % (dns_name,
+                            dns.rdatatype.to_text(rdtype), entry_attrs[attr],
+                            e))
+                        raise e
+                else:
+                    ldap_rrset = None
+
+                ldap_rrsets[rdtype] = ldap_rrset
+        else:
+            # all records were deleted => name should not exist in DNS
+            rdtype = dns.rdatatype.from_text('A')
+            ldap_rrsets[rdtype] = 'NXDOMAIN'
+
+        for rdtype in ldap_rrsets:
+            # compare ldap_rrsets with data in DNS
+            ldap_rrset = ldap_rrsets[rdtype]
+            self.log.debug('querying DNS server - expecting answer {%s}' % ldap_rrset)
+            while True:
+                try:
+                    dns_answer = dns.resolver.query(dns_name, rdtype,
+                                                    dns.rdataclass.IN,
+                                                    raise_on_no_answer=False)
+                    dns_rrset = dns_answer.rrset
+                except dns.resolver.NXDOMAIN:
+                    dns_rrset = 'NXDOMAIN'
+
+                if dns_rrset == ldap_rrset:
+                    self.log.debug('DNS answer matches expectations')
+                    break
+                self.log.debug('received answer {%s} does not match '
+                               'expectations, waiting 1 second before re-try'
+                               % dns_rrset)
+                # TODO: this is not ideal: add timeout
+                # or at least detect shutdown
+                time.sleep(1)
+
 api.register(dnsrecord)
 
 
@@ -2514,6 +2578,7 @@ class dnsrecord_add(LDAPCreate):
                 entry_attrs[attr] = list(set(old_entry.get(attr, []) + vals))
 
         self.obj.check_record_type_collisions(keys, old_entry, entry_attrs)
+        context.dnsrecord_entry_mods = entry_attrs.copy()
         return dn
 
     def exc_callback(self, keys, options, exc, call_func, *call_args, **call_kwargs):
@@ -2539,6 +2604,12 @@ class dnsrecord_add(LDAPCreate):
             entry_attrs[self.obj.primary_key.name] = [_dns_zone_record]
 
         self.obj.postprocess_record(entry_attrs, **options)
+
+        if self.api.env['wait_for_dns']:
+            dns_domain = dns.name.from_text(keys[0])
+            dns_name = dns.name.from_text(keys[1], origin=dns_domain)
+            self.obj.wait_for_modified_attrs(context.dnsrecord_entry_mods,
+                dns_name)
 
         return dn
 
@@ -2615,6 +2686,7 @@ class dnsrecord_mod(LDAPUpdate):
                 entry_attrs[attr] = list(set(old_entry[attr] + new_dnsvalue))
 
         self.obj.check_record_type_collisions(keys, old_entry, entry_attrs)
+        context.dnsrecord_entry_mods = entry_attrs.copy()
         return dn
 
     def execute(self, *keys, **options):
@@ -2636,7 +2708,16 @@ class dnsrecord_mod(LDAPUpdate):
                     break
 
             if del_all:
-                return self.obj.methods.delentry(*keys)
+                result = self.obj.methods.delentry(*keys)
+                # indicate that entry was deleted
+                context.dnsrecord_entry_mods = None
+
+        if self.api.env['wait_for_dns']:
+            dns_domain = dns.name.from_text(keys[0])
+            dns_name = dns.name.from_text(keys[1], origin=dns_domain)
+            self.obj.wait_for_modified_attrs(context.dnsrecord_entry_mods,
+                                             dns_name)
+
         return result
 
     def post_callback(self, ldap, dn, entry_attrs, *keys, **options):
@@ -2780,11 +2861,15 @@ class dnsrecord_del(LDAPUpdate):
         # set del_all flag in context
         # when the flag is enabled, the entire DNS record object is deleted
         # in a post callback
-        setattr(context, 'del_all', del_all)
+        context.del_all = del_all
+        context.dnsrecord_entry_mods = entry_attrs.copy()
 
         return dn
 
     def execute(self, *keys, **options):
+        if self.api.env['wait_for_dns']:
+            dns_domain = dns.name.from_text(keys[0])
+            dns_name = dns.name.from_text(keys[1], origin=dns_domain)
         if options.get('del_all', False):
             if self.obj.is_pkey_zone_record(*keys):
                 raise errors.ValidationError(
@@ -2792,13 +2877,18 @@ class dnsrecord_del(LDAPUpdate):
                         error=_('Zone record \'%s\' cannot be deleted') \
                                 % _dns_zone_record
                       )
-            return self.obj.methods.delentry(*keys, version=options['version'])
+            result = self.obj.methods.delentry(*keys, version=options['version'])
+            self.obj.wait_for_modified_attrs(None, dns_name)
+            return result
 
         result = super(dnsrecord_del, self).execute(*keys, **options)
 
         if getattr(context, 'del_all', False) and not \
                 self.obj.is_pkey_zone_record(*keys):
-            return self.obj.methods.delentry(*keys, version=options['version'])
+            result = self.obj.methods.delentry(*keys, version=options['version'])
+            context.dnsrecord_entry_mods = None
+
+        self.obj.wait_for_modified_attrs(context.dnsrecord_entry_mods, dns_name)
         return result
 
     def post_callback(self, ldap, dn, entry_attrs, *keys, **options):
