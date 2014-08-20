@@ -147,6 +147,12 @@ dlv_dn = DN(('idnsname', dlv), zone1_dn)
 
 dlvrec = u'60485 5 1 2BB183AF5F22588179A53B0A98631FAD1A292118'
 
+ds = u'ds'
+ds_dnsname = DNSName(ds)
+ds_dn = DN(('idnsname', ds), zone1_dn)
+
+ds_rec = u'0 0 0 00'
+
 tlsa = u'tlsa'
 tlsa_dnsname = DNSName(tlsa)
 tlsa_dn = DN(('idnsname', tlsa), zone1_dn)
@@ -1317,6 +1323,61 @@ class test_dns(Declarative):
                     'dn': dlv_dn,
                     'idnsname': [dlv_dnsname],
                     'dlvrecord': [dlvrec],
+                },
+            },
+        ),
+
+
+        dict(
+            desc='Try to add DS record to zone %r apex, using dnsrecord_add' % (zone1),
+            command=('dnsrecord_add', [zone1, zone1_absolute], {'dsrecord': ds_rec}),
+            expected=errors.ValidationError(
+                name="dsrecord",
+                error=u'DS record must not be in zone apex (RFC 4035 section 2.4)'
+            ),
+        ),
+
+
+        dict(
+            desc='Try to add DS record %r without NS record in RRset, using dnsrecord_add' % (ds),
+            command=('dnsrecord_add', [zone1, ds], {'dsrecord': ds_rec}),
+            expected=errors.ValidationError(
+                name="dsrecord",
+                error=u'DS record requires to coexist with an NS record (RFC 4529, section 4.6)'
+            ),
+        ),
+
+
+        dict(
+            desc='Add NS record to %r using dnsrecord_add' % (ds),
+            command=('dnsrecord_add', [zone1, ds],
+                     {'nsrecord': zone1_ns}),
+            expected={
+                'value': ds_dnsname,
+                'summary': None,
+                'result': {
+                    'objectclass': objectclasses.dnsrecord,
+                    'dn': ds_dn,
+                    'idnsname': [ds_dnsname],
+                    'nsrecord': [zone1_ns],
+                },
+            },
+        ),
+
+
+        dict(
+            desc='Add DS record to %r using dnsrecord_add' % (ds),
+            command=('dnsrecord_add', [zone1, ds],
+                     {'dsrecord': ds_rec}),
+            expected={
+                'value': ds_dnsname,
+                'summary': None,
+                'result': {
+                    'objectclass': objectclasses.dnsrecord,
+                    'dn': ds_dn,
+                    'idnsname': [ds_dnsname],
+                    'nsrecord': [zone1_ns],
+                    'dsrecord': [ds_rec],
                 },
             },
         ),
