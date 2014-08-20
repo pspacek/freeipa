@@ -2610,6 +2610,14 @@ class dnsrecord(LDAPObject):
                            doc=_('Parse all raw DNS records and return them in a structured way'),
                            )
 
+    def _dsrecord_pre_callback(self, ldap, dn, entry_attrs, *keys, **options):
+        assert isinstance(dn, DN)
+        dsrecords = entry_attrs.get('dsrecord')
+        if dsrecords and self.is_pkey_zone_record(*keys):
+            raise errors.ValidationError(
+                name='dsrecord',
+                error=unicode(_('DS record must not be in zone apex (RFC 4035 section 2.4)')))
+
     def _nsrecord_pre_callback(self, ldap, dn, entry_attrs, *keys, **options):
         assert isinstance(dn, DN)
         nsrecords = entry_attrs.get('nsrecord')
@@ -2916,6 +2924,17 @@ class dnsrecord(LDAPObject):
                           error=_('DNAME record is not allowed to coexist with an '
                                   'NS record except when located in a zone root '
                                   'record (RFC 6672, section 2.3)'))
+
+        # DS record validation
+        dsrecords = rrattrs.get('dsrecord')
+        nsrecords = rrattrs.get('nsrecord')
+        # DS record cannot be in zone apex, checked in pre-callback validators
+        if dsrecords and not nsrecords:
+            raise errors.ValidationError(
+                name='dsrecord',
+                error=_('DS record requires to coexist with an '
+                         'NS record (RFC 4529, section 4.6)'))
+
 
     def _entry2rrsets(self, entry_attrs, dns_name, dns_domain):
         '''Convert entry_attrs to a dictionary {rdtype: rrset}.
