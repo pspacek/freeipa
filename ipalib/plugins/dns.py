@@ -2919,11 +2919,6 @@ class dnsrecord(LDAPObject):
                         error=_('only one DNAME record is allowed per name '
                                 '(RFC 6672, section 2.4)'))
                 # DNAME must not coexist with CNAME, but this is already checked earlier
-                if rrattrs.get('nsrecord') and not keys[1].is_empty():
-                    raise errors.ValidationError(name='dnamerecord',
-                          error=_('DNAME record is not allowed to coexist with an '
-                                  'NS record except when located in a zone root '
-                                  'record (RFC 6672, section 2.3)'))
 
         # DS record validation
         dsrecords = rrattrs.get('dsrecord')
@@ -2934,6 +2929,22 @@ class dnsrecord(LDAPObject):
                 name='dsrecord',
                 error=_('DS record requires to coexist with an '
                          'NS record (RFC 4529, section 4.6)'))
+
+        # NS record validation
+        # NS record can coexist only with A, AAAA, DS, and other NS records (except zone apex)
+        # RFC 2181 section 6.1,
+        allowed_records = ['AAAA', 'A', 'DS', 'NS']
+        if nsrecords and not self.is_pkey_zone_record(*keys):
+            for r_type in _record_types:
+                if (r_type not in allowed_records
+                    and rrattrs.get('%srecord' % r_type.lower())
+                ):
+                    raise errors.ValidationError(
+                        name='nsrecord',
+                        error=_('NS record is not allowed to coexist with an '
+                                '%(type)s record except when located in a '
+                                'zone root record (RFC 2181, section 6.1)') %
+                                {'type': r_type})
 
 
     def _entry2rrsets(self, entry_attrs, dns_name, dns_domain):
