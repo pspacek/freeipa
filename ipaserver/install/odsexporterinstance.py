@@ -78,7 +78,7 @@ class ODSExporterInstance(service.Service):
         self.start_creation()
 
     def __check_dnssec_status(self):
-        ods_enforcerd = services.knownservices['ods-enforcerd']
+        ods_enforcerd = services.knownservices.ods_enforcerd
 
         try:
             self.ods_uid = pwd.getpwnam(ods_enforcerd.get_user_name()).pw_uid
@@ -152,7 +152,7 @@ class ODSExporterInstance(service.Service):
             raise
 
     def __disable_signerd(self):
-        signerd_service = services.knownservices['ods-signerd']
+        signerd_service = services.knownservices.ods_signerd
 
         self.backup_state("singerd_running", signerd_service.is_running())
         self.backup_state("singerd_enabled", signerd_service.is_enabled())
@@ -182,7 +182,7 @@ class ODSExporterInstance(service.Service):
         # restore state of dnssec default signer daemon
         signerd_enabled = self.restore_state("singerd_enabled")
         signerd_running = self.restore_state("singerd_runnning")
-        signerd_service = services.knownservices['ods-signerd']
+        signerd_service = services.knownservices.ods_signerd
 
         signerd_service.unmask()
 

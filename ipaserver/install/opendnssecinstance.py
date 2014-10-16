@@ -134,8 +134,8 @@ class OpenDNSSECInstance(service.Service):
         self.start_creation()
 
     def __check_dnssec_status(self):
-        named = services.knownservices['named']
-        ods_enforcerd = services.knownservices['ods-enforcerd']
+        named = services.knownservices.named
+        ods_enforcerd = services.knownservices.ods_enforcerd
 
         try:
             self.named_uid = pwd.getpwnam(named.get_user_name()).pw_uid
@@ -276,7 +276,7 @@ class OpenDNSSECInstance(service.Service):
             'setup'
         ]
 
-        ods_enforcerd = services.knownservices['ods-enforcerd']
+        ods_enforcerd = services.knownservices.ods_enforcerd
         ipautil.run(command, stdin="y", runas=ods_enforcerd.get_user_name())
 
     def __setup_dnskeysyncd(self):

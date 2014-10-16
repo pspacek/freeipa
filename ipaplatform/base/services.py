@@ -39,7 +39,7 @@ wellknownservices = ['certmonger', 'dirsrv', 'httpd', 'ipa', 'krb5kdc',
                      'messagebus', 'nslcd', 'nscd', 'ntpd', 'portmap',
                      'rpcbind', 'kadmin', 'sshd', 'autofs', 'rpcgssd',
                      'rpcidmapd', 'pki_tomcatd', 'pki_cad', 'chronyd',
-                     'domainname']
+                     'domainname', 'named', 'ods_enforcerd', 'ods_signerd']
 
 # The common ports for these services. This is used to wait for the
 # service to become available.
@@ -134,10 +134,19 @@ class PlatformService(object):
     def is_enabled(self, instance_name=""):
         return False
 
+    def is_masked(self, instance_name=""):
+        return False
+
     def enable(self, instance_name=""):
         return
 
     def disable(self, instance_name=""):
+        return
+
+    def mask(self, instance_name=""):
+        return
+
+    def unmask(self, instance_name=""):
         return
 
     def install(self, instance_name=""):
@@ -147,6 +156,18 @@ class PlatformService(object):
         return
 
     def get_config_dir(self, instance_name=""):
+        return
+
+    def get_user_name(self, instance_name=""):
+        return
+
+    def get_group_name(self, instance_name=""):
+        return
+
+    def get_binary_path(self):
+        return
+
+    def get_package_name(self):
         return
 
 
