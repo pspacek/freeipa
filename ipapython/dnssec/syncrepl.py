@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2014  FreeIPA Contributors see COPYING for license
+#
 """
 This script implements a syncrepl consumer which syncs data from server
 to a local dict.

@@ -1,4 +1,7 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2014  FreeIPA Contributors see COPYING for license
+#
 """
 This is FreeIPA's replacement for signerd from OpenDNSSEC suite version 1.4.x.
 

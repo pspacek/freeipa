@@ -1,3 +1,8 @@
+#!/usr/bin/python
+#
+# Copyright (C) 2014  FreeIPA Contributors see COPYING for license
+#
+
 from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_inc
 import sys

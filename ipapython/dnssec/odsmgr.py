@@ -1,4 +1,7 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2014  FreeIPA Contributors see COPYING for license
+#
 
 import logging
 from lxml import etree

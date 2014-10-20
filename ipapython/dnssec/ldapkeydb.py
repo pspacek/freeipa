@@ -1,4 +1,7 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2014  FreeIPA Contributors see COPYING for license
+#
 
 from binascii import hexlify
 import collections

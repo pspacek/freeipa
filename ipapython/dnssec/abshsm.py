@@ -1,3 +1,8 @@
+#!/usr/bin/python
+#
+# Copyright (C) 2014  FreeIPA Contributors see COPYING for license
+#
+
 import _ipap11helper
 
 attrs_id2name = {
