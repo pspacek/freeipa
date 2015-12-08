@@ -82,6 +82,13 @@ check: bootstrap-autogen server tests
 		(cd $$subdir && $(MAKE) check) || exit 1; \
 	done
 
+# works only in Git tree
+assert-clean-tree:
+	./assert-clean-tree.sh
+
+review: assert-clean-tree version-update
+	./review.sh
+
 bootstrap-autogen: version-update client-autogen
 	@echo "Building IPA $(IPA_VERSION)"
 	cd asn1; if [ ! -e Makefile ]; then ../autogen.sh --prefix=/usr --sysconfdir=/etc --localstatedir=/var --libdir=$(LIBDIR); fi
