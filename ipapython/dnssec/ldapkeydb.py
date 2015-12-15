@@ -105,6 +105,28 @@ def get_default_attrs(object_classes):
         result.update(defaults[cls])
     return result
 
+
+class KeyDeleter(object):
+    """placeholder for to-be-deleted object in cache"""
+    def __init__(self, entry, ldap):
+        self.entry = entry
+        self.ldap = ldap
+        self.log = ldap.log.getChild(__name__)
+
+    def _update_key(self):
+        """remove key metadata object from LDAP
+
+        After calling this, the python object is no longer valid and has to
+        be deleted.
+        """
+        self.log.debug('deleting key id 0x%s DN %s from LDAP',
+                       hexlify(self.entry.single_value['ipk11id']),
+                       self.entry.dn)
+        self.ldap.delete_entry(self.entry)
+        self.entry = None
+        self.ldap = None
+
+
 class Key(collections.MutableMapping):
     """abstraction to hide LDAP entry weirdnesses:
         - non-normalized attribute names
@@ -155,6 +177,23 @@ class Key(collections.MutableMapping):
         for attr in default_attrs:
             if self.get(attr, empty) == default_attrs[attr]:
                 del self[attr]
+
+    def _update_key(self):
+        """remove default values from LDAP entry and write back changes"""
+        self._cleanup_key()
+
+        try:
+            self.ldap.update_entry(self.entry)
+        except ipalib.errors.EmptyModlist:
+            pass
+
+    def prepare_deletion(self):
+        """create placeholder for a deleted key
+
+        This placeholder needs to be put into key cache. Object will be
+        actually deleted when _update_key() on the new object is called."""
+        return KeyDeleter(self.entry, self.ldap)
+
 
 class ReplicaKey(Key):
     # TODO: object class assert
@@ -242,21 +281,26 @@ class LdapKeyDB(AbstractHSM):
         self._update_keys()
         return keys
 
-    def _update_key(self, key):
-        """remove default values from LDAP entry and write back changes"""
-        key._cleanup_key()
-
-        try:
-            self.ldap.update_entry(key.entry)
-        except ipalib.errors.EmptyModlist:
-            pass
-
     def _update_keys(self):
         for cache in [self.cache_masterkeys, self.cache_replica_pubkeys_wrap,
-                self.cache_zone_keypairs]:
+                      self.cache_zone_keypairs]:
             if cache:
                 for key in cache.values():
-                    self._update_key(key)
+                    key._update_key()
+
+    def schedule_key_deletion(self, keyid):
+        """schedule key deletion from LDAP and from in-memory cache
+
+        Keys will be actually deleted when flush() is called."""
+        matched_already = False
+        for keyset in [self.zone_keypairs, self.replica_pubkeys_wrap,
+                       self.master_keys]:
+            if keyid in keyset:
+                assert not matched_already, \
+                    "key %s is in more than one keyset" % hexlify(keyid)
+                matched_already = True
+                # this replaces object in LdapKeyDB cache with placeholder
+                keyset[keyid] = keyset[keyid].prepare_deletion()
 
     def flush(self):
         """write back content of caches to LDAP"""
