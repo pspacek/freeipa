@@ -4311,6 +4311,9 @@ class dnsconfig(LDAPObject):
             cli_name='zone_refresh',
             label=_('Zone refresh interval'),
         ),
+        Int('ipadnsversion?',  # available only in installer/upgrade
+            label=_('IPA DNS version'),
+        ),
     )
     managed_permissions = {
         'System: Write DNS Configuration': {
@@ -4337,7 +4340,7 @@ class dnsconfig(LDAPObject):
             'ipapermdefaultattr': {
                 'objectclass',
                 'idnsallowsyncptr', 'idnsforwarders', 'idnsforwardpolicy',
-                'idnspersistentsearch', 'idnszonerefresh'
+                'idnspersistentsearch', 'idnszonerefresh', 'ipadnsversion'
             },
             'default_privileges': {'DNS Administrators', 'DNS Servers'},
         },
@@ -4358,10 +4361,16 @@ class dnsconfig(LDAPObject):
             result['summary'] = unicode(_('Global DNS configuration is empty'))
 
 
-
 @register()
 class dnsconfig_mod(LDAPUpdate):
     __doc__ = _('Modify global DNS configuration.')
+
+    def get_options(self):
+        """hide ipadnsversion outside of installer/upgrade"""
+        for option in super(dnsconfig_mod, self).get_options():
+            if option.name == 'ipadnsversion':
+                option = option.clone(include=('installer', 'updates'))
+            yield option
 
     def interactive_prompt_callback(self, kw):
 
@@ -4418,6 +4427,7 @@ class dnsconfig_show(LDAPRetrieve):
         result = super(dnsconfig_show, self).execute(*keys, **options)
         self.obj.postprocess_result(result)
         return result
+
 
 
 @register()
