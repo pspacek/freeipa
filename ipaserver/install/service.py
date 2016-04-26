@@ -184,7 +184,7 @@ class Service(object):
         self.admin_conn.unbind()
         self.admin_conn = None
 
-    def _ldap_mod(self, ldif, sub_dict=None, raise_on_err=False):
+    def _ldap_mod(self, ldif, sub_dict=None, raise_on_err=True):
         pw_name = None
         fd = None
         path = ipautil.SHARE_DIR + ldif
@@ -228,9 +228,9 @@ class Service(object):
             try:
                 ipautil.run(args, nolog=nologlist)
             except ipautil.CalledProcessError as e:
+                root_logger.critical("Failed to load %s: %s" % (ldif, str(e)))
                 if raise_on_err:
                     raise
-                root_logger.critical("Failed to load %s: %s" % (ldif, str(e)))
         finally:
             if pw_name:
                 os.remove(pw_name)
