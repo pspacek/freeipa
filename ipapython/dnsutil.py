@@ -23,6 +23,8 @@ import copy
 
 import six
 
+from ipaserver.install import installutils
+
 if six.PY3:
     unicode = str
 
@@ -258,3 +260,22 @@ def related_to_auto_empty_zone(name):
                  dns.name.NAMERELN_SUPERDOMAIN}
     return any(name.fullcompare(aez)[0] in relations
                for aez in EMPTY_ZONES)
+
+
+def has_empty_zone_addresses(hostname):
+    """Detect if given host is using IP address belonging to
+    an automatic empty zone.
+
+    Information from --ip-address option used in installed is lost by
+    the time when upgrade is run. Use IP addresses from DNS as best
+    approximation.
+
+    This is brain-dead and duplicates logic from DNS installer
+    but I did not find other way around.
+    """
+    ip_addresses = installutils.resolve_host(hostname)
+    return any(
+        inside_auto_empty_zone(dnsutil.DNSName(
+            CheckedIPAddress(ip, parse_netmask=False).reverse_dns))
+        for ip in ip_addresses
+    )
