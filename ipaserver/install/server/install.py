@@ -1062,11 +1062,6 @@ def uninstall_check(installer):
 
     installer._installation_cleanup = False
 
-    if not is_ipa_configured():
-        print("WARNING:\nIPA server is not configured on this system. "
-              "If you want to install the\nIPA server, please install "
-              "it using 'ipa-server-install'.")
-
     fstore = sysrestore.FileStore(SYSRESTORE_DIR_PATH)
     sstore = sysrestore.StateFile(SYSRESTORE_DIR_PATH)
 
@@ -1076,6 +1071,19 @@ def uninstall_check(installer):
         context='installer',
         in_server=True,
     )
+
+    if not is_ipa_configured():
+        print("WARNING:\nIPA server is not configured on this system. "
+              "If you want to install the\nIPA server, please install "
+              "it using 'ipa-server-install'.")
+        # Previously this happened implicitly on second (and next) uninstalls!
+        # In fact it is a huge hack to allow uninstallation to proceed
+        # even if we think that IPA is not installed.
+        cfg['basedn'] = DN(
+            ('fake', 'DN'), ('for', 'fake'), ('dc', 'uninstall'))
+        cfg['realm'] = 'FAKE.REALM.FOR.UNINSTALL'
+        cfg['domain'] = 'fake.domain.for.uninstall'
+
 
     # We will need at least api.env, finalize api now. This system is
     # already installed, so the configuration file is there.

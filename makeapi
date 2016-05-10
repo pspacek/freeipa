@@ -35,6 +35,7 @@ from ipalib.parameters import Param
 from ipalib.output import Output
 from ipalib.text import Gettext, NGettext, ConcatenatedLazyText
 from ipalib.capabilities import capabilities
+from ipapython.dn import DN
 
 API_FILE='API.txt'
 
@@ -424,6 +425,9 @@ def main():
         enable_ra=True,
         mode='developer',
         plugins_on_demand=False,
+        realm="EXAMPLE.COM",
+        domain="example.com",
+        basedn=DN(('dc', 'example'), ('dc', 'com')),
     )
 
     api.bootstrap(**cfg)
