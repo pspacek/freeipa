@@ -71,9 +71,12 @@ DEFAULT_CONFIG = (
     ('version', VERSION),
 
     # Domain, realm, basedn:
-    ('domain', 'example.com'),
-    ('realm', 'EXAMPLE.COM'),
-    ('basedn', DN(('dc', 'example'), ('dc', 'com'))),
+    # Following values do not have any reasonable default.
+    # Do not initialize them so the code which depends on them blows up early
+    # and does not do crazy stuff with default values instead of real ones.
+    # ('domain', 'example.com'),
+    # ('realm', 'EXAMPLE.COM'),
+    # ('basedn', DN(('dc', 'example'), ('dc', 'com'))),
 
     # LDAP containers:
     ('container_accounts', DN(('cn', 'accounts'))),

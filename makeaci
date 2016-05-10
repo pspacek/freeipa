@@ -96,6 +96,7 @@ def main(options):
         plugins_on_demand=False,
         basedn=DN('dc=ipa,dc=example'),
         realm='IPA.EXAMPLE',
+        domain="example.com",
     )
     api.import_plugins('ipaserver.plugins.ldap2')
     api.import_plugins('ipaserver.install.plugins.update_managed_permissions')
