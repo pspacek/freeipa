@@ -20,6 +20,7 @@ from ipalib.plugins.baseldap import (
     LDAPObject,
     LDAPUpdate,
 )
+from ipapython.dn import DN
 from ipapython.dnsutil import DNSName
 
 __doc__ = _("""
@@ -103,6 +104,12 @@ class location(LDAPObject):
             label=_('Description'),
             doc=_('IPA Location description'),
         ),
+        Str(
+            'servers*',
+            label=_('Servers'),
+            doc=_('Servers that belongs to the IPA location'),
+            flags={'virtual_attribute', 'no_create', 'no_update', 'no_search'},
+        ),
     )
 
     def get_dn(self, *keys, **options):
@@ -147,3 +154,18 @@ class location_find(LDAPSearch):
 @register()
 class location_show(LDAPRetrieve):
     __doc__ = _('Display information about an IPA location.')
+
+    def post_callback(self, ldap, dn, entry_attrs, *keys, **options):
+        assert isinstance(dn, DN)
+        servers_output = []
+        servers = self.api.Command.server_find(in_location=keys[-1])['result']
+        for server in servers:
+            servers_output.append(
+                u"{server} (weight: {weight})".format(
+                    server=server['cn'][0],
+                    weight=server.get('ipalocationweight', [100])[0]
+                )
+            )
+        if servers_output:
+            entry_attrs['servers'] = servers_output
+        return dn

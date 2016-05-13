@@ -64,6 +64,16 @@ class server(LDAPObject):
         'iparepltopomanagedsuffix': ('Managed', '', 'no_'),
         'ipalocation': ('IPA', 'in_', 'not_in_'),
     }
+    permission_filter_objectclasses = ['ipaLocationMember']
+    managed_permissions = {
+        'System: Read Locations of IPA Servers': {
+            'ipapermright': {'read', 'search', 'compare'},
+            'ipapermdefaultattr': {
+                'objectclass', 'cn', 'ipalocation', 'ipalocationweight',
+            },
+            'default_privileges': {'DNS Administrators'},
+        },
+    }
     takes_params = (
         Str(
             'cn',
