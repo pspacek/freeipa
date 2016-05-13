@@ -90,5 +90,5 @@ IPA_DATA_VERSION=20100614120000
 #                                                      #
 ########################################################
 IPA_API_VERSION_MAJOR=2
-IPA_API_VERSION_MINOR=167
-# Last change: mbasti - location-* commands
+IPA_API_VERSION_MINOR=168
+# Last change: mbasti - allow member param other than Str
