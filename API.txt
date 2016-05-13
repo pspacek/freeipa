@@ -2766,9 +2766,10 @@ output: Entry('result', <type 'dict'>, Gettext('A dictionary representing an LDA
 output: Output('summary', (<type 'unicode'>, <type 'NoneType'>), None)
 output: PrimaryKey('value', None, None)
 command: location_del
-args: 1,2,3
+args: 1,3,3
 arg: DNSNameParam('idnsname', attribute=True, cli_name='name', multivalue=True, only_relative=True, primary_key=True, query=True, required=True)
 option: Flag('continue', autofill=True, cli_name='continue', default=False)
+option: Flag('force', autofill=True, default=False)
 option: Str('version?', exclude='webui')
 output: Output('result', <type 'dict'>, None)
 output: Output('summary', (<type 'unicode'>, <type 'NoneType'>), None)

@@ -9,8 +9,10 @@ from ipalib import (
     ngettext,
     api,
     Str,
-    DNSNameParam
+    DNSNameParam,
+    Flag,
 )
+from ipalib.errors import DependentEntry
 from ipalib.plugable import Registry
 from ipalib.plugins.baseldap import (
     LDAPCreate,
@@ -132,6 +134,29 @@ class location_del(LDAPDelete):
     __doc__ = _('Delete an IPA location.')
 
     msg_summary = _('Deleted IPA location "%(value)s"')
+
+    takes_options = LDAPDelete.takes_options + (
+        Flag(
+            'force',
+            label=_('Force'),
+            doc=_('force location removal'),
+        ),
+    )
+
+    def pre_callback(self, ldap, dn, *keys, **options):
+        assert isinstance(dn, DN)
+        if not options.get('force'):
+            servers = self.api.Command.server_find(
+                in_location=keys[-1])['result']
+            location_members = u', '.join(
+                server['cn'][0] for server in servers)
+            if location_members:
+                raise DependentEntry(
+                    label=_('IPA Server(s)'),
+                    key=keys[-1],
+                    dependent=location_members
+                )
+        return dn
 
 
 @register()
