@@ -11,11 +11,11 @@ from ipatests.test_xmlrpc.tracker.base import Tracker
 
 class LocationTracker(Tracker):
     """Tracker for IPA Location tests"""
-    retrieve_keys = {'idnsname', 'description', 'dn'}
+    retrieve_keys = {'idnsname', 'description', 'dn', 'servers'}
     retrieve_all_keys = retrieve_keys | {'objectclass'}
-    create_keys = retrieve_keys | {'objectclass'}
-    find_keys = retrieve_keys
-    find_all_keys = retrieve_all_keys
+    create_keys = {'idnsname', 'description', 'dn', 'objectclass'}
+    find_keys = {'idnsname', 'description', 'dn',}
+    find_all_keys = find_keys | {'objectclass'}
     update_keys = {'idnsname', 'description'}
 
     def __init__(self, name, description=u"Location description"):
@@ -40,9 +40,9 @@ class LocationTracker(Tracker):
             'location_add', self.idnsname, description=self.description,
         )
 
-    def make_delete_command(self):
+    def make_delete_command(self, force=False):
         """Make function that removes this location using location-del"""
-        return self.make_command('location_del', self.idnsname)
+        return self.make_command('location_del', self.idnsname, force=force)
 
     def make_retrieve_command(self, all=False, raw=False):
         """Make function that retrieves this location using location-show"""
@@ -117,3 +117,20 @@ class LocationTracker(Tracker):
             summary=u'Modified IPA location "{loc}"'.format(loc=self.idnsname),
             result=self.filter_attrs(self.update_keys | set(extra_keys))
         ), result)
+
+    def add_server_to_location(self, server_name, weight=100):
+        servers = self.attrs.setdefault('servers', [])
+        servers.append(u"{server} (weight: {weight})".format(
+            server=server_name, weight=weight))
+
+    def remove_server_from_location(self, server_name, weight=100):
+        if 'servers' not in self.attrs:
+            return
+        servers = self.attrs['servers']
+        try:
+            servers.remove(u"{server} (weight: {weight})".format(
+                server=server_name, weight=weight))
+        except ValueError:
+            pass
+        if not servers:
+            del self.attrs['servers']
