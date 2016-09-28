@@ -42,7 +42,8 @@ def install_check(standalone, replica_config, options):
             replica_conn_check(
                 replica_config.master_host_name, host_name, realm_name, True,
                 replica_config.ca_ds_port, options.admin_password,
-                principal=principal, ca_cert_file=options.ca_cert_file)
+                principal=principal, ca_cert_file=options.ca_cert_file,
+                debug=options.debug)
 
         if options.skip_schema_check or options.promote:
             root_logger.info("Skipping CA DS schema check")

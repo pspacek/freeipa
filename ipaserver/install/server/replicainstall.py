@@ -10,6 +10,7 @@ import dns.exception as dnsexception
 import dns.name as dnsname
 import dns.resolver as dnsresolver
 import dns.reversename as dnsreversename
+import logging
 import os
 import shutil
 import socket
@@ -767,7 +768,8 @@ def install_check(installer):
         replica_conn_check(
             config.master_host_name, config.host_name, config.realm_name,
             options.setup_ca, config.ca_ds_port, options.admin_password,
-            ca_cert_file=cafile)
+            ca_cert_file=cafile,
+            debug=(root_logger.getEffectiveLevel() == logging.DEBUG))
 
     installer._remote_api = remote_api
     installer._fstore = fstore
@@ -1346,7 +1348,8 @@ def promote_check(installer):
                 config.master_host_name, config.host_name, config.realm_name,
                 options.setup_ca, 389,
                 options.admin_password, principal=options.principal,
-                ca_cert_file=cafile)
+                ca_cert_file=cafile,
+                debug=(root_logger.getEffectiveLevel() == logging.DEBUG))
         finally:
             if add_to_ipaservers:
                 os.environ['KRB5CCNAME'] = ccache

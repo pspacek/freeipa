@@ -68,6 +68,17 @@ KRB5KDC_ERR_SVC_UNAVAILABLE = 2529638941 # A service is not available that is
                                          # required to process the request
 
 
+def _get_socket_constants(prefix):
+    """Create a dictionary mapping of socket module constants to text names."""
+    return dict((getattr(socket, name), name)
+                for name in dir(socket)
+                if name.startswith(prefix))
+
+_SOCKET_FAMILY_NAMES = _get_socket_constants('AF_')
+_SOCKET_TYPE_NAMES = _get_socket_constants('SOCK_')
+_SOCKET_PROTOCOL_NAMES = _get_socket_constants('IPPROTO_')
+
+
 def get_domain_name():
     try:
         config.init_config()
@@ -932,12 +943,19 @@ def user_input(prompt, default = None, allow_empty = True):
 
 
 def host_port_open(host, port, socket_type=socket.SOCK_STREAM, socket_timeout=None):
+    root_logger.debug('resolving host name %s', host)
     for res in socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket_type):
         af, socktype, proto, canonname, sa = res
         try:
             try:
+                root_logger.debug('opening socket to address %s family %s '
+                                  'socket type %s protocol %s',
+                                  sa, _SOCKET_FAMILY_NAMES[af],
+                                  _SOCKET_TYPE_NAMES[socktype],
+                                  _SOCKET_PROTOCOL_NAMES[proto])
                 s = socket.socket(af, socktype, proto)
-            except socket.error:
+            except socket.error as ex:
+                root_logger.debug('unable to open socket: %s', ex)
                 s = None
                 continue
 
@@ -951,8 +969,8 @@ def host_port_open(host, port, socket_type=socket.SOCK_STREAM, socket_timeout=No
                 s.recv(512)
 
             return True
-        except socket.error as e:
-            pass
+        except socket.error as ex:
+            root_logger.debug('unable to connect: %s', ex)
         finally:
             if s:
                 s.close()
