@@ -8,6 +8,9 @@
 %global with_python3 1
 %endif
 
+# lint is not executed during rpmbuild
+# %global with_lint 1
+
 %global alt_name ipa
 %if 0%{?rhel}
 %global samba_version 4.0.5-1
@@ -108,7 +111,13 @@ BuildRequires:  python-cffi
 #
 # Build dependencies for lint
 #
+%if 0%{?with_lint}
 BuildRequires:  samba-python
+BuildRequires:  python-setuptools
+# 0.6: serialization.load_pem_private_key, load_pem_public_key
+BuildRequires:  python-cryptography >= 0.6
+BuildRequires:  python-dateutil
+BuildRequires:  python-gssapi
 BuildRequires:  pylint >= 1.0
 # workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1096506
 BuildRequires:  python2-polib
@@ -124,11 +133,15 @@ BuildRequires:  python-pytest-multihost
 BuildRequires:  python-pytest-sourceorder
 BuildRequires:  python-jwcrypto
 BuildRequires:  python-custodia
+BuildRequires:  dbus-python
+BuildRequires:  python-netifaces
 BuildRequires:  python-sss
+BuildRequires:  python-sss-murmur
 BuildRequires:  python-sssdconfig
 BuildRequires:  systemd-python
 BuildRequires:  python-nose
 BuildRequires:  python-paste
+%endif # with_lint
 
 #
 # Build dependencies for unit tests
