@@ -103,6 +103,7 @@ BuildRequires:  samba-python
 BuildRequires:  python-setuptools
 # 0.6: serialization.load_pem_private_key, load_pem_public_key
 BuildRequires:  python-cryptography >= 0.6
+BuildRequires:  python-dateutil
 BuildRequires:  python-gssapi
 BuildRequires:  pylint >= 1.0
 # workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1096506
@@ -124,7 +125,6 @@ BuildRequires:  python-pytest-sourceorder
 BuildRequires:  python-jwcrypto
 BuildRequires:  python-custodia
 BuildRequires:  dbus-python
-BuildRequires:  python-dateutil
 BuildRequires:  python-netifaces
 BuildRequires:  python-sss
 BuildRequires:  python-sss-murmur
