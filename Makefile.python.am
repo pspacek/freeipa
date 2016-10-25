@@ -1,0 +1,34 @@
+pkgname = $(shell basename "$(abs_srcdir)")
+pkgpythondir = $(pythondir)/$(pkgname)
+
+all-local:
+	(cd $(srcdir); $(PYTHON) setup.py build \
+	--build-base "$(abs_builddir)/build" \
+	--verbose)
+
+install-exec-local:
+	$(PYTHON) $(srcdir)/setup.py install \
+		--prefix "$(DESTDIR)$(prefix)" \
+		--single-version-externally-managed \
+		--record "$(DESTDIR)$(pkgpythondir)/install_files.txt" \
+		--optimize 1 \
+		--verbose
+
+uninstall-local:
+	cat "$(DESTDIR)$(pkgpythondir)/install_files.txt" | xargs rm -rf
+	rm -rf "$(DESTDIR)$(pkgpythondir)"
+
+clean-local:
+	$(PYTHON) "$(srcdir)/setup.py" clean --all
+
+# take list of all Python source files and copy them into distdir
+# SOURCES.txt does not contain directories so we need to create those
+dist-hook:
+	$(PYTHON) "$(srcdir)/setup.py" egg_info
+	PYTHON_SOURCES=$$(cat "$(srcdir)/$(pkgname).egg-info/SOURCES.txt") || exit $$?;	\
+	for FILEN in $${PYTHON_SOURCES}; 						\
+	do										\
+		TARGETDIR=$$(dirname "$(distdir)/$${FILEN}") || exit $$?;		\
+		mkdir -p "$${TARGETDIR}" || exit $$?;					\
+		cp "$(srcdir)/$${FILEN}" "$(distdir)/$${FILEN}" || exit $$?;		\
+	done
