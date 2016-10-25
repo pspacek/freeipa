@@ -37,7 +37,6 @@ freeipa2-dev-doc
 
 # Root directory
 /freeipa.spec
-!/Makefile
 /dist/
 /*/dist/
 /RELEASE
