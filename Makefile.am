@@ -1,6 +1,5 @@
-SUBDIRS = asn1 util client contrib daemons install ipaclient ipalib ipaplatform ipapython ipaserver ipatests po
+SUBDIRS = asn1 util client contrib daemons init install ipaclient ipalib ipaplatform ipapython ipaserver ipatests po
 # doc
-# init
 
 # user-facing scripts
 dist_bin_SCRIPTS = ipa
