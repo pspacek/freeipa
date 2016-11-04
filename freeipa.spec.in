@@ -800,13 +800,6 @@ mkdir -p %{buildroot}%{_usr}/share/ipa/ui/js/plugins
 mkdir -p %{buildroot}%{_sysconfdir}/ipa/kdcproxy/
 install -m 644 install/share/kdcproxy.conf %{buildroot}%{_sysconfdir}/ipa/kdcproxy/kdcproxy.conf
 
-mkdir -p %{buildroot}%{_localstatedir}/run/
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/ipa_memcached/
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/ipa/
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/httpd/ipa
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/httpd/ipa/clientcaches
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/httpd/ipa/krbcache
-
 mkdir -p %{buildroot}%{_libdir}/krb5/plugins/libkrb5
 touch %{buildroot}%{_libdir}/krb5/plugins/libkrb5/winbind_krb5_locator.so
 
