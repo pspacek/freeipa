@@ -39,7 +39,6 @@ rpmdistdir:
 
 rpms: dist-gzip rpmroot rpmdistdir
 	cp $(top_builddir)/$(TARBALL) $(RPMBUILD)/SOURCES/
-	export MAKEFLAGS="-j16"
 	rpmbuild --define "_topdir $(RPMBUILD)" -ba $(top_builddir)/$(PACKAGE).spec
 	cp $(RPMBUILD)/RPMS/*/*.rpm $(top_builddir)/dist/rpms/
 	cp $(RPMBUILD)/SRPMS/*.src.rpm $(top_builddir)/dist/srpms/
