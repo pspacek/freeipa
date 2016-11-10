@@ -34,3 +34,6 @@ MAINTAINERCLEANFILES =                  \
         *~                              \
         Makefile.in
 	$(NULL)
+
+install-data-hook:
+	$(INSTALL) -d -D -m 755 $(DESTDIR)$(appdir)/js/plugins

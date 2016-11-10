@@ -16,3 +16,16 @@ EXTRA_DIST =                            \
 MAINTAINERCLEANFILES =                  \
         *~                              \
         Makefile.in
+
+# Default user-modifiable HTML files are installed into /etc.
+# /usr points to these modifiable files in /etc
+# This is ugly but we do not have time to change it right now.
+# Relative paths must be used to ensure that symlinks created in buildroot
+# work after installation.
+htmldatadir = $(datarootdir)/ipa/html
+install-data-hook:
+	$(INSTALL) -d -D -m 755 $(DESTDIR)$(htmldatadir)
+	RELATIVE_PATH=$$(python -c "import os.path; print(os.path.relpath('$(appdir)', '$(htmldatadir)'))");	\
+	for FILE in $(app_DATA); do										\
+		$(LN_S) --force $${RELATIVE_PATH}/$${FILE} $(DESTDIR)$(htmldatadir)/$${FILE};				\
+	done
