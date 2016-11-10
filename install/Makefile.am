@@ -19,6 +19,10 @@ SUBDIRS =			\
 	$(NULL)
 
 install-exec-local:
+	mkdir -p $(DESTDIR)$(IPA_SYSCONF_DIR)/custodia
+	chmod 700 $(DESTDIR)$(IPA_SYSCONF_DIR)/custodia
+	mkdir -p $(DESTDIR)$(localstatedir)/lib/ipa/backup
+	chmod 700 $(DESTDIR)$(localstatedir)/lib/ipa/backup
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/ipa/sysrestore
 	chmod 700 $(DESTDIR)$(localstatedir)/lib/ipa/sysrestore
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/ipa/sysupgrade
